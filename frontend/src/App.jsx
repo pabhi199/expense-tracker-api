@@ -63,32 +63,52 @@ export default function App() {
   }
 
   async function deleteCategory(cat) {
-    if (!confirm(`Delete category "${cat.name}"? All its expenses will also be deleted.`)) return
+    if (!confirm(`Delete "${cat.name}"? All its expenses will also be deleted.`)) return
     await api.deleteCategory(cat.id)
     load()
   }
 
   const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })
 
+  function prevMonth() {
+    const d = new Date(year, month - 2)
+    setYear(d.getFullYear())
+    setMonth(d.getMonth() + 1)
+  }
+
+  function nextMonth() {
+    const d = new Date(year, month)
+    setYear(d.getFullYear())
+    setMonth(d.getMonth() + 1)
+  }
+
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1025 50%, #0f1a1a 100%)' }}>
+
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">💰</span>
-            <h1 className="text-xl font-bold text-slate-800">Expense Tracker</h1>
+      <header className="border-b sticky top-0 z-40 backdrop-blur-md" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(15,15,26,0.85)' }}>
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+              💰
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-white leading-none">Expense Tracker</h1>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Personal Finance</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowCategoryModal(true)}
-              className="text-sm border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 font-medium"
+              className="text-sm px-3 py-2 rounded-xl font-medium transition-all"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.1)' }}
             >
               + Category
             </button>
             <button
               onClick={openAdd}
-              className="text-sm bg-violet-600 text-white px-4 py-1.5 rounded-lg hover:bg-violet-700 font-medium"
+              className="text-sm px-4 py-2 rounded-xl font-medium transition-all text-white"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
             >
               + Add Expense
             </button>
@@ -96,58 +116,54 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Month Selector */}
-        <div className="flex items-center gap-3 mb-6">
-          <button
-            onClick={() => { const d = new Date(year, month - 2); setYear(d.getFullYear()); setMonth(d.getMonth() + 1) }}
-            className="p-2 rounded-lg hover:bg-white text-slate-500 hover:text-slate-800"
-          >
-            &#8592;
+      <main className="max-w-5xl mx-auto px-4 py-8">
+
+        {/* Month Navigator */}
+        <div className="flex items-center justify-between mb-8">
+          <button onClick={prevMonth} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }}>
+            ←
           </button>
-          <h2 className="text-lg font-semibold text-slate-700 w-44 text-center">{monthName}</h2>
-          <button
-            onClick={() => { const d = new Date(year, month); setYear(d.getFullYear()); setMonth(d.getMonth() + 1) }}
-            className="p-2 rounded-lg hover:bg-white text-slate-500 hover:text-slate-800"
-          >
-            &#8594;
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-white">{monthName}</h2>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {loading ? 'Loading...' : `${report?.expense_count ?? 0} transactions`}
+            </p>
+          </div>
+          <button onClick={nextMonth} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }}>
+            →
           </button>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-slate-400">Loading...</div>
+          <div className="flex flex-col items-center justify-center py-32 gap-4">
+            <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#7c3aed', borderTopColor: 'transparent' }} />
+            <p style={{ color: 'rgba(255,255,255,0.4)' }}>Loading your expenses...</p>
+          </div>
         ) : (
           <>
             <Dashboard report={report} />
 
-            {/* Categories bar */}
+            {/* Categories */}
             {categories.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-5">
+              <div className="flex flex-wrap gap-2 mb-6">
                 {categories.map((cat) => (
-                  <div key={cat.id} className="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-3 py-1 text-sm">
-                    <span className="text-slate-700 font-medium">{cat.name}</span>
-                    <button
-                      onClick={() => deleteCategory(cat)}
-                      className="text-slate-300 hover:text-red-500 ml-1 leading-none"
-                      title="Delete category"
-                    >
-                      &times;
-                    </button>
+                  <div key={cat.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all group" style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#c4b5fd' }}>
+                    <span className="font-medium">{cat.name}</span>
+                    <button onClick={() => deleteCategory(cat)} className="opacity-0 group-hover:opacity-100 transition-opacity ml-0.5 hover:text-red-400 text-xs leading-none">×</button>
                   </div>
                 ))}
               </div>
             )}
 
+            {/* Expenses header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-700">All Expenses</h3>
-              <span className="text-sm text-slate-400">{expenses.length} items</span>
+              <h3 className="font-semibold text-white">All Transactions</h3>
+              <span className="text-sm px-2.5 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                {expenses.length} total
+              </span>
             </div>
 
-            <ExpenseList
-              expenses={expenses}
-              onEdit={openEdit}
-              onDelete={deleteExpense}
-            />
+            <ExpenseList expenses={expenses} onEdit={openEdit} onDelete={deleteExpense} />
           </>
         )}
       </main>

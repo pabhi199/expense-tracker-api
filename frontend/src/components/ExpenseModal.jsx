@@ -48,35 +48,53 @@ export default function ExpenseModal({ expense, categories, onSave, onClose }) {
     }
   }
 
+  const inputStyle = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '10px',
+    padding: '10px 12px',
+    fontSize: '14px',
+    color: 'white',
+    outline: 'none',
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-800">
-            {expense ? 'Edit Expense' : 'Add Expense'}
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: '#1a1025', border: '1px solid rgba(255,255,255,0.1)' }}>
+
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div>
+            <h2 className="text-base font-bold text-white">{expense ? 'Edit Expense' : 'Add New Expense'}</h2>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Fill in the details below</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+            ×
+          </button>
         </div>
 
         <form onSubmit={submit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg">{error}</div>
+            <div className="text-sm px-4 py-3 rounded-xl" style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)', color: '#fca5a5' }}>
+              {error}
+            </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>Title</label>
             <input
               required
               value={form.title}
               onChange={(e) => set('title', e.target.value)}
               placeholder="e.g. Lunch at cafe"
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+              style={inputStyle}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>Amount (₹)</label>
               <input
                 required
                 type="number"
@@ -85,43 +103,45 @@ export default function ExpenseModal({ expense, categories, onSave, onClose }) {
                 value={form.amount}
                 onChange={(e) => set('amount', e.target.value)}
                 placeholder="0.00"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>Date</label>
               <input
                 required
                 type="date"
                 value={form.spent_on}
                 onChange={(e) => set('spent_on', e.target.value)}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                style={inputStyle}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>Category</label>
             <select
               value={form.category_id}
               onChange={(e) => set('category_id', e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+              style={{ ...inputStyle, cursor: 'pointer' }}
             >
-              <option value="">Select category</option>
+              <option value="" style={{ background: '#1a1025' }}>Select category</option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id} style={{ background: '#1a1025' }}>{c.name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Notes <span className="text-slate-400">(optional)</span></label>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Notes <span style={{ color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>(optional)</span>
+            </label>
             <textarea
               value={form.notes}
               onChange={(e) => set('notes', e.target.value)}
               placeholder="Any additional notes..."
               rows={2}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none"
+              style={{ ...inputStyle, resize: 'none' }}
             />
           </div>
 
@@ -129,14 +149,16 @@ export default function ExpenseModal({ expense, categories, onSave, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border border-slate-200 text-slate-600 rounded-lg py-2 text-sm font-medium hover:bg-slate-50"
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-violet-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-violet-700 disabled:opacity-60"
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
             >
               {saving ? 'Saving...' : expense ? 'Save Changes' : 'Add Expense'}
             </button>
