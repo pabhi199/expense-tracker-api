@@ -1,0 +1,19 @@
+{
+  "zones": { "yellow_pct": 50, "red_pct": 70 },
+  "notices": { "on_red": true, "on_post_compact": true, "on_session_start": true },
+  "auto_inject": { "post_compact": false, "session_start": false },
+  "handoff": {
+    "keep_backup": true,
+    "store_in_repo": false,
+    "model": "haiku",
+    "max_summary_tokens": 800,
+    "transcript_tail_lines": 400
+  },
+  "statusline": {
+    "enabled": true,
+    "show_cost": true,
+    "show_burn_rate": true,
+    "auto_compact_pct": 92
+  },
+  "log": { "retention_days": 30 }
+}

@@ -1,0 +1,30 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/statusline.sh"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bash .claude/ctx-protocol/scripts/print_handoff_info.sh)",
+      "Bash(bash .claude/ctx-protocol/scripts/print_handoff_content.sh)",
+      "Bash(bash .claude/ctx-protocol/scripts/print_settings.sh)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      { "matcher": "*", "hooks": [{ "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh session_start" }] }
+    ],
+    "Stop": [
+      { "matcher": "*", "hooks": [{ "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh stop", "timeout": 25 }] }
+    ],
+    "PreCompact": [
+      { "matcher": "*", "hooks": [{ "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh pre_compact", "timeout": 30 }] }
+    ],
+    "PostCompact": [
+      { "matcher": "*", "hooks": [{ "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh post_compact" }] }
+    ],
+    "SessionEnd": [
+      { "matcher": "*", "hooks": [{ "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh session_end", "timeout": 30 }] }
+    ]
+  }
+}
