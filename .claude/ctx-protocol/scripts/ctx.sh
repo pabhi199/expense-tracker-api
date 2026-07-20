@@ -101,14 +101,17 @@ EOF
 
 # Rough context-fullness estimate, used only in-memory to decide whether
 # this turn crosses into the red zone. Hook payloads don't carry the real
-# context_window_size (only statusLine gets that), so this assumes a 200k
-# window — it can read low for sessions on a larger one. Precise enough to
-# trigger the "you're probably getting full" insurance write, NOT precise
-# enough to persist as fact, so it never gets written to turns.jsonl.
+# context_window_size (only statusLine gets that), so this assumes
+# zones.assumed_context_window (200k by default — bump it in settings if
+# you're actually on a 1M-context account, for a more accurate trigger).
+# Precise enough to trigger the "you're probably getting full" insurance
+# write, NOT precise enough to persist as fact, so it never gets written
+# to turns.jsonl.
 # Prints: used_pct tokens_in tokens_out cache_creation cache_read
 ctx_estimate_usage() {
     [ -f "$transcript_path" ] || { echo "0 0 0 0 0"; return; }
-    local usage window=200000
+    local usage window
+    window=$(ctx_setting '.zones.assumed_context_window' 200000)
     usage=$(tail -n 60 "$transcript_path" 2>/dev/null | jq -rs '
         [.[] | select(.type=="assistant") | .message.usage] | last // empty' 2>/dev/null)
     [ -z "$usage" ] || [ "$usage" = "null" ] && { echo "0 0 0 0 0"; return; }

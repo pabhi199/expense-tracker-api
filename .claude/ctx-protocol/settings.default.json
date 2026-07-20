@@ -1,5 +1,9 @@
 {
-  "zones": { "yellow_pct": 50, "red_pct": 70 },
+  "zones": {
+    "yellow_pct": 50,
+    "red_pct": 70,
+    "assumed_context_window": 200000
+  },
   "notices": { "on_red": true, "on_post_compact": true, "on_session_start": true },
   "auto_inject": { "post_compact": false, "session_start": false },
   "handoff": {
@@ -13,7 +17,11 @@
     "enabled": true,
     "show_cost": true,
     "show_burn_rate": true,
-    "auto_compact_pct": 92
+    "show_turn_count": true,
+    "auto_compact_pct": 92,
+    "burn_rate_window": 0,
+    "spike_multiplier": 2,
+    "bar_length": 10
   },
   "log": { "retention_days": 30 }
 }

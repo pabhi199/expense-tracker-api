@@ -26,18 +26,19 @@ ctx-tool addresses all four with one principle: **the statusline is the interfac
 A single always-visible line, color-coded by *quality zone* — not just raw fill:
 
 ```
-▮▮▮▮▮▯▯▯ 54% of 200K | git:(main) | ≈9 turns | 4.1k tok/turn | $1.84
+▮▮▮▮▯▯▯▯▯▯ 43% of 1M | git:(main) | turn 9, ≈714 turns left, 686 tok/turn | current $1.50 total $28.77
 ```
 
 | Field | Meaning |
 |---|---|
 | Context bar + % of window | How full the window is (and whether you're on a 200K or 1M window) — the bar's color *is* the zone (green/yellow/red), no redundant text label |
 | git branch | Current branch, when the statusline's cwd is inside a git repo |
-| ≈ turns left | Forecast to auto-compact, based on your *recent* burn rate (rolling 5-turn window) |
-| tok/turn | Average tokens per turn — flips color when a spike (big file reads) is detected |
-| $ | Session cost so far |
+| turn N | How many turns this session so far — an exact count, not an estimate |
+| ≈N turns left | Forecast to auto-compact, based on your burn rate — the *whole session* by default, not just a recent slice (configurable via `statusline.burn_rate_window`) |
+| tok/turn | Average tokens per turn over that same window — flips color when a single turn spikes past `spike_multiplier`× the average |
+| current $ / total $ | Cost of the most recently completed turn, and the running session total |
 
-The `%` and window size come straight from Claude Code's own statusline data on every render — nothing here is a manual estimate. (The only manual, approximate percentage anywhere in ctx-protocol lives inside the hooks that decide when to auto-save a red-zone handoff, since hook payloads don't carry the real context window size — that number is intentionally never shown or logged, only used as a rough trigger.)
+The `%`, window size, and cost come straight from Claude Code's own statusline data on every render — nothing here is a manual estimate. The turn-left/tok-turn forecast is built entirely from real per-render observations of Claude Code's own token counts (never from a hook's estimate) — see `statusline.burn_rate_window` in Configure, below. (The only manual, approximate percentage anywhere in ctx-protocol lives inside the hooks that decide when to auto-save a red-zone handoff, since hook payloads don't carry the real context window size — that number is intentionally never shown or logged, only used as a rough trigger, and is itself configurable via `zones.assumed_context_window`.)
 
 **Zones:** green below 50%, yellow 50–70%, red above 70% (all configurable). Yellow is a visual signal only — no interruptions. Red is where the tool acts.
 
@@ -55,7 +56,9 @@ Unlike compaction's in-context summary, a handoff survives crashes, closed termi
 
 ### 3. Complete per-turn logging
 
-Every turn is appended to a per-session `turns.jsonl` — tokens in/out, cache reads/writes, model, tools used, files touched, and compaction events. This is the raw data layer behind the statusline and forecasts, and yours to analyze however you like. (Per-turn cost and context % aren't logged: hook payloads never carry cost, and the only context-window-size hooks can assume is a rough guess — accurate enough to trigger the red-zone insurance write, not accurate enough to persist as fact. The live statusline gets the real numbers straight from Claude Code.)
+Every turn is appended to a per-session `turns.jsonl` — tokens in/out, cache reads/writes, model, tools used, files touched, and compaction events. Yours to analyze however you like. (Per-turn cost and context % aren't logged: hook payloads never carry cost, and the only context-window-size hooks can assume is a rough guess — accurate enough to trigger the red-zone insurance write, not accurate enough to persist as fact.)
+
+The statusline's own forecast (≈turns left, tok/turn) is deliberately *not* built from this file — it keeps a separate, minimal `context_history.jsonl`, populated only from the real `total_input_tokens`/`total_output_tokens` Claude Code hands it on every render. Nothing shown on the statusline is ever derived from a hook's estimate.
 
 ### 4. Three one-line notices — and nothing more
 
@@ -121,7 +124,7 @@ Shipped defaults live in `.claude/ctx-protocol/settings.default.json`; per-proje
 
 ```json
 {
-  "zones": { "yellow_pct": 50, "red_pct": 70 },
+  "zones": { "yellow_pct": 50, "red_pct": 70, "assumed_context_window": 200000 },
   "notices": { "on_red": true, "on_post_compact": true, "on_session_start": true },
   "auto_inject": { "post_compact": false, "session_start": false },
   "handoff": {
@@ -132,7 +135,14 @@ Shipped defaults live in `.claude/ctx-protocol/settings.default.json`; per-proje
     "transcript_tail_lines": 400
   },
   "statusline": {
-    "enabled": true, "show_cost": true, "show_burn_rate": true, "auto_compact_pct": 92
+    "enabled": true,
+    "show_cost": true,
+    "show_burn_rate": true,
+    "show_turn_count": true,
+    "auto_compact_pct": 92,
+    "burn_rate_window": 0,
+    "spike_multiplier": 2,
+    "bar_length": 10
   },
   "log": { "retention_days": 30 }
 }
@@ -143,10 +153,14 @@ Handoffs are always scoped to project + git branch — one file per branch, no s
 Notable knobs:
 
 - **`zones`** — move the thresholds; red is always clamped below your auto-compact trigger so there's room to act.
+- **`zones.assumed_context_window`** — hook payloads never carry your real context window size, so the red-zone trigger has to assume one. Set this to your actual window (e.g. `1000000` on a 1M-context account) for a more accurate trigger; the statusline itself never needs this, since it gets the real size from Claude Code directly.
 - **`notices`** — turn any of the three one-liners off individually.
 - **`auto_inject`** — off by default; opt in if you want handoffs restored automatically after compaction or at session start.
 - **`handoff.model`** — summaries run on Haiku by default, so generating them costs next to nothing.
 - **`handoff.store_in_repo`** — opt in to commit handoffs so teammates pulling your branch inherit your context.
+- **`statusline.burn_rate_window`** — how many recent turns feed the `tok/turn` / `≈N left` forecast. `0` (default) uses the whole session for a stable average; set it to a smaller number (e.g. `5`) if you'd rather the forecast react quickly to a recent burst instead.
+- **`statusline.spike_multiplier`** — a turn is flagged as a spike when its token delta exceeds this many times the average.
+- **`statusline.bar_length`** / **`show_turn_count`** — cosmetic: bar width in characters, and whether to show `turn N`.
 
 ### Where things live
 
@@ -163,7 +177,8 @@ Notable knobs:
     │   ├── main.md              ← one per branch, previous version kept as .md.1
     │   └── feature-auth-fix.md
     ├── sessions/<session_id>/
-    │   └── turns.jsonl          ← complete per-turn log the statusline forecasts from
+    │   ├── turns.jsonl           ← complete per-turn log, for your own analysis
+    │   └── context_history.jsonl ← one real observation per turn, the statusline forecasts from
     ├── settings.local.json      ← optional per-project overrides
     └── error.log
 ```

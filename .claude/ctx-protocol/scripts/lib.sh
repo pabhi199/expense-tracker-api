@@ -29,11 +29,14 @@ ctx_settings() {
 }
 
 # ctx_setting '.zones.red_pct' 70
+# jq's `//` treats JSON `false` as falsy (same as null/missing), which
+# would silently discard any boolean setting explicitly set to false — use
+# an explicit null-check instead so `false` round-trips correctly.
 ctx_setting() {
     local path="$1" default="$2"
     local val
-    val=$(ctx_settings | jq -r "$path // empty" 2>/dev/null)
-    [ -n "$val" ] && [ "$val" != "null" ] && echo "$val" || echo "$default"
+    val=$(ctx_settings | jq -r "(${path}) as \$v | if \$v == null then empty else \$v end" 2>/dev/null)
+    [ -n "$val" ] && echo "$val" || echo "$default"
 }
 
 ctx_branch() {
