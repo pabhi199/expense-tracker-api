@@ -2,17 +2,17 @@
 # install.sh — wires ctx-protocol into a project. Everything ctx-protocol
 # owns lives in this folder; the only files this script touches outside it
 # are ones Claude Code *requires* at fixed locations (.claude/settings.json
-# for hooks/statusLine, .claude/commands/ for slash commands, and
-# .git/info/exclude for keeping runtime data out of git). Safe to re-run —
-# every change is additive and matched by exact content, so running twice
-# never duplicates anything.
+# for hooks/statusLine, .claude/skills/ for the handoff/resume-handoff/
+# ctx-settings skills, and .git/info/exclude for keeping runtime data out of
+# git). Safe to re-run — every change is additive and matched by exact
+# content, so running twice never duplicates anything.
 #
 # Usage:
 #   bash install.sh                    install into the project this folder
 #                                       sits under (<project>/.claude/ctx-protocol)
 #   bash install.sh --project-dir DIR  install into a different project root
 #   bash install.sh --uninstall        remove everything this script added
-#   bash install.sh --force            overwrite customized installed commands
+#   bash install.sh --force            overwrite customized installed skills
 set -u
 
 CTX_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -80,14 +80,15 @@ if [ "$UNINSTALL" != "1" ] && [ -n "$existing_statusline" ] && [[ "$existing_sta
     echo "  NOTE: .claude/settings.json already has a different statusLine (\"$existing_statusline\") — leaving it as-is. Merge ctx-protocol's statusLine from settings.fragment.json manually if you want it." >&2
 fi
 
-merge_script="$CTX_DIR/scripts/merge_settings.jq"
-[ "$UNINSTALL" = "1" ] && merge_script="$CTX_DIR/scripts/unmerge_settings.jq"
+merge_script="$CTX_DIR/scripts/settings_merge.jq"
+merge_mode="install"
+[ "$UNINSTALL" = "1" ] && merge_mode="uninstall"
 
 backup="$SETTINGS_FILE.bak.$(date -u +%Y%m%dT%H%M%SZ)"
 cp "$SETTINGS_FILE" "$backup"
 
 tmp="$(mktemp)"
-if jq -s -f "$merge_script" "$SETTINGS_FILE" "$FRAGMENT" > "$tmp" 2>/dev/null && jq empty "$tmp" 2>/dev/null; then
+if jq -s --arg mode "$merge_mode" -f "$merge_script" "$SETTINGS_FILE" "$FRAGMENT" > "$tmp" 2>/dev/null && jq empty "$tmp" 2>/dev/null; then
     mv "$tmp" "$SETTINGS_FILE"
     rm -f "$backup"
     echo "  updated .claude/settings.json"

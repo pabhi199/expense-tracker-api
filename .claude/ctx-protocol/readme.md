@@ -26,15 +26,18 @@ ctx-tool addresses all four with one principle: **the statusline is the interfac
 A single always-visible line, color-coded by *quality zone* — not just raw fill:
 
 ```
-▮▮▮▮▮▯▯▯ 54% | ≈9 turns | 4.1k tok/turn | $1.84
+▮▮▮▮▮▯▯▯ 54% of 200K | git:(main) | ≈9 turns | 4.1k tok/turn | $1.84
 ```
 
 | Field | Meaning |
 |---|---|
-| Context bar + % | How full the window is — the bar's color *is* the zone (green/yellow/red), no redundant text label |
+| Context bar + % of window | How full the window is (and whether you're on a 200K or 1M window) — the bar's color *is* the zone (green/yellow/red), no redundant text label |
+| git branch | Current branch, when the statusline's cwd is inside a git repo |
 | ≈ turns left | Forecast to auto-compact, based on your *recent* burn rate (rolling 5-turn window) |
 | tok/turn | Average tokens per turn — flips color when a spike (big file reads) is detected |
 | $ | Session cost so far |
+
+The `%` and window size come straight from Claude Code's own statusline data on every render — nothing here is a manual estimate. (The only manual, approximate percentage anywhere in ctx-protocol lives inside the hooks that decide when to auto-save a red-zone handoff, since hook payloads don't carry the real context window size — that number is intentionally never shown or logged, only used as a rough trigger.)
 
 **Zones:** green below 50%, yellow 50–70%, red above 70% (all configurable). Yellow is a visual signal only — no interruptions. Red is where the tool acts.
 
@@ -52,13 +55,13 @@ Unlike compaction's in-context summary, a handoff survives crashes, closed termi
 
 ### 3. Complete per-turn logging
 
-Every turn is appended to a per-session `turns.jsonl` — tokens in/out, cache reads/writes, cost, model, tools used, files touched, context %, zone, and compaction events. This is the raw data layer behind the statusline and forecasts, and yours to analyze however you like.
+Every turn is appended to a per-session `turns.jsonl` — tokens in/out, cache reads/writes, model, tools used, files touched, and compaction events. This is the raw data layer behind the statusline and forecasts, and yours to analyze however you like. (Per-turn cost and context % aren't logged: hook payloads never carry cost, and the only context-window-size hooks can assume is a rough guess — accurate enough to trigger the red-zone insurance write, not accurate enough to persist as fact. The live statusline gets the real numbers straight from Claude Code.)
 
 ### 4. Three one-line notices — and nothing more
 
 ctx-tool speaks at most three times per session, one line each, asked once and never repeated:
 
-1. **Entering red:** `⚠ 72% — handoff saved. /compact or /clear recommended.`
+1. **Entering red:** `⚠ context is getting full — handoff saved. /compact or /clear recommended.`
 2. **After compaction:** `Compacted. /resume-handoff to restore task state.`
 3. **Session start (handoff found for your branch):** `Handoff for feature-auth-fix (2h old): "fixing token refresh, tests 3/5 passing" — /resume-handoff to load.`
 
@@ -102,13 +105,15 @@ You mostly do nothing. Watch the statusline color:
 | Yellow bar | Past 50% — plan a good stopping point | Optionally `/handoff` + `/compact` at a natural boundary |
 | Red bar + one-line notice | Handoff already saved for you | `/compact` to continue here, or `/clear` and `/resume-handoff` in a fresh session |
 
-### Commands
+### Skills
+
+Implemented as `.claude/skills/*/SKILL.md`, invoked the same way as any other skill or slash command:
 
 | Command | What it does |
 |---|---|
 | `/handoff` | Snapshot your working state right now (before lunch, before a risky refactor) |
 | `/resume-handoff` | Inject the latest handoff for the current project + branch into the session — **the only way ctx-tool ever adds anything to your context** |
-| `/ctx-settings` | Open the settings file in your editor |
+| `/ctx-settings` | Show the effective settings and edit the local override for you |
 
 ### Configure (optional)
 

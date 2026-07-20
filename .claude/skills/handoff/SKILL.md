@@ -7,7 +7,7 @@ description: Snapshot the current working state to ctx-protocol's durable handof
 
 Write (or overwrite) a durable handoff file for the current project + branch so this work can be resumed later, even in a fresh session.
 
-1. Run `bash .claude/ctx-protocol/scripts/print_handoff_info.sh` with the Bash tool. It prints the target `path`, the current `branch`, and whether `keep_backup` is enabled.
+1. Run `bash .claude/ctx-protocol/scripts/ctx.sh print-handoff-info` with the Bash tool. It prints the target `path`, the current `branch`, and whether `keep_backup` is enabled.
 2. If `keep_backup` is `true` and the file at `path` already exists, copy it to the same path with a `.1` suffix first (`cp path path.1`).
 3. Using the Write tool, write the file at `path` with exactly this structure:
 
@@ -27,7 +27,7 @@ Summary: <one line, under 100 chars, current state of the task>
 <bullet list of files this session has read or edited, or "None identified.">
 ```
 
-4. Run `bash .claude/ctx-protocol/scripts/print_settings.sh` and check `.handoff.store_in_repo`. If `true`, run `git add -f <path>` so the handoff gets committed with the branch.
+4. Run `bash .claude/ctx-protocol/scripts/ctx.sh print-settings` and check `.handoff.store_in_repo`. If `true`, run `git add -f <path>` so the handoff gets committed with the branch.
 5. Confirm to the user in one line that the handoff was saved, and where.
 
 If the user passed extra text with the command, fold it into the summary/notes as their explicit note about current state.

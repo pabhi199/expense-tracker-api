@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh session_start"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/ctx.sh hook session_start"
           }
         ]
       }
@@ -71,7 +71,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh stop",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/ctx.sh hook stop",
             "timeout": 25
           }
         ]
@@ -83,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh pre_compact",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/ctx.sh hook pre_compact",
             "timeout": 30
           }
         ]
@@ -95,7 +95,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh post_compact"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/ctx.sh hook post_compact"
           }
         ]
       }
@@ -106,7 +106,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/hook_router.sh session_end",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/ctx-protocol/scripts/ctx.sh hook session_end",
             "timeout": 30
           }
         ]
@@ -119,9 +119,9 @@
   },
   "permissions": {
     "allow": [
-      "Bash(bash .claude/ctx-protocol/scripts/print_handoff_content.sh)",
-      "Bash(bash .claude/ctx-protocol/scripts/print_handoff_info.sh)",
-      "Bash(bash .claude/ctx-protocol/scripts/print_settings.sh)"
+      "Bash(bash .claude/ctx-protocol/scripts/ctx.sh print-handoff-content)",
+      "Bash(bash .claude/ctx-protocol/scripts/ctx.sh print-handoff-info)",
+      "Bash(bash .claude/ctx-protocol/scripts/ctx.sh print-settings)"
     ]
   }
 }

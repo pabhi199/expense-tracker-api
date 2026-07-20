@@ -15,6 +15,19 @@ context_size=$(echo "$input" | jq -r '.context_window.context_window_size // 200
 cost_usd=$(echo "$input" | jq -r '.cost.total_cost_usd // empty' 2>/dev/null)
 session_id=$(echo "$input" | jq -r '.session_id // "unknown"' 2>/dev/null)
 model_name=$(echo "$input" | jq -r '.model.display_name // "?"' 2>/dev/null)
+cwd=$(echo "$input" | jq -r '.cwd // .workspace.current_dir // empty' 2>/dev/null)
+
+# window size, human-readable (200000 -> "200K", 1000000 -> "1M")
+if [ "$context_size" -ge 1000000 ] 2>/dev/null; then
+    window_str="$(awk -v s="$context_size" 'BEGIN{v=s/1000000; printf (v==int(v))?"%dM":"%.1fM", v}')"
+elif [ "$context_size" -ge 1000 ] 2>/dev/null; then
+    window_str="$(awk -v s="$context_size" 'BEGIN{printf "%dK", s/1000}')"
+else
+    window_str="$context_size"
+fi
+
+branch=""
+[ -n "$cwd" ] && branch=$(ctx_branch "$cwd")
 
 used_int=$(printf '%.0f' "${used_pct:-0}" 2>/dev/null || echo 0)
 zone=$(ctx_zone "$used_int")
@@ -36,16 +49,18 @@ for ((i = 0; i < filled; i++)); do bar+="▮"; done
 for ((i = 0; i < empty; i++)); do bar+="▯"; done
 
 # --- burn rate + forecast, from this session's turn log ---
-# Average successive context_tokens deltas over the last few turns, then
-# project how many turns remain until auto_compact_pct at that burn rate.
+# Reconstruct each turn's context size as tokens_in+cache_creation+cache_read
+# (turns.jsonl doesn't store that sum directly — it's derivable from fields
+# already there), average successive deltas, then project how many turns
+# remain until auto_compact_pct at that burn rate.
 turns_file="$(ctx_session_dir "$session_id")/turns.jsonl"
 turns_left="–"
 tok_per_turn="–"
 spike=0
 if [ -f "$turns_file" ]; then
-    # Only real per-turn records carry context_tokens (compaction-event rows
+    # Only real per-turn records carry tokens_in (compaction-event rows
     # logged separately don't), so filter those out before diffing.
-    deltas=$(tail -n 20 "$turns_file" 2>/dev/null | jq -r 'select(has("context_tokens")) | .context_tokens' 2>/dev/null | tail -n 6)
+    deltas=$(tail -n 20 "$turns_file" 2>/dev/null | jq -r 'select(has("tokens_in")) | ((.tokens_in // 0) + (.cache_creation // 0) + (.cache_read // 0))' 2>/dev/null | tail -n 6)
     if [ -n "$deltas" ]; then
         read -r avg last_delta spike <<< "$(echo "$deltas" | awk 'NF{a[NR]=$1} END{
             if (NR<2) { print "0 0 0"; exit }
@@ -82,7 +97,8 @@ fi
 
 # --- assemble ---
 # Zone is conveyed by the bar's color alone — no redundant text label.
-parts=("${color}${bar}${reset} ${used_int}%")
+parts=("${color}${bar}${reset} ${used_int}% of ${window_str}")
+[ -n "$branch" ] && parts+=("git:(${branch})")
 show_burn=$(ctx_setting '.statusline.show_burn_rate' true)
 if [ "$show_burn" = "true" ]; then
     [ "$turns_left" != "–" ] && parts+=("≈${turns_left} turns")
