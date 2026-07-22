@@ -88,7 +88,7 @@ fi
 [ "$(is_num "$CACHE_CREATE")" != "1" ] && CACHE_CREATE=0
 GROWTH_TOK=$(awk -v o="$OUT_TOK" -v i="$IN_TOK" -v c="$CACHE_CREATE" 'BEGIN{printf "%d", o+i+c}')
 TOKEN_DELTA=""
-[ "$GROWTH_TOK" -gt 0 ] 2>/dev/null && TOKEN_DELTA=$(awk -v n="$GROWTH_TOK" 'BEGIN{if(n>=1000) printf "+%.1fk", n/1000; else printf "+%d", n}')
+[ "$GROWTH_TOK" -gt 0 ] 2>/dev/null && TOKEN_DELTA=$(awk -v n="$GROWTH_TOK" 'BEGIN{if(n>=1000) printf "↑%.1fk", n/1000; else printf "+%d", n}')
 if [ "$GROWTH_TOK" -ge "$TOKEN_DELTA_YELLOW" ] 2>/dev/null; then TOKEN_COLOR="$TOKEN_COLOR_HIGH"
 elif [ "$GROWTH_TOK" -ge "$TOKEN_DELTA_MAGENTA" ] 2>/dev/null; then TOKEN_COLOR="$TOKEN_COLOR_MID"
 else TOKEN_COLOR="$TOKEN_COLOR_LOW"; fi
