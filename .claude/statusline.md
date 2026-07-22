@@ -3,7 +3,7 @@
 A single-line, color-coded statusline for [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) that shows the model, context window usage, token throughput, prompt-cache efficiency, and session cost — all computed from the JSON Claude Code pipes into the script on every render.
 
 ```
-Sonnet 4.6 #12 | ▮▮▮▮▮▮▯▯▯▯ 65% of 200k +2.4k | cache 82% | total $3.40 ↑$0.18
+Sonnet 4.6 #12 | ▮▮▮▮▮▮▯▯▯▯ 65% of 200k ↑2.4k | cache 82% | total $3.40 ↑$0.18
 ```
 
 ---
